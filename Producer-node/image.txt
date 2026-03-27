@@ -1,0 +1,52 @@
+                                                       +-----------------+
+                                                       |  PM2 / App Hosts |
+                                                       |  (app2.js tail)  |
+                                                       +--------+--------+
+                                                                |
+                                                                | JSON logs (topic: "logs")
+                                                                v
+                           +----------------+              +----+----+
+                           |  External      |              | Kafka   |
+                           |  Producers     |--------------> (Aiven) |
+                           | (other services)|  topic:logs |  Broker  |
+                           +----------------+              +----+----+
+                                                                |
+                                                                v
+                                      +-------------------------+-------------------------+
+                                      |                      Consumer                      |
+                                      |                 consumercopy.py (Python)          |
+                                      +-------------------------+-------------------------+
+                                                                |
+            +--------------------------+------------------------+-------------------------+
+            |                          |                        |                         |
+            v                          v                        v                         v
+   +----------------+        +-------------------+     +-----------------+       +-------------------+
+   |  Detection &   |        |  Deduplication    |     |   OpenAI LLM    |       |   Execution / PM2  |
+   |  Decision      |        |  (Redis / Valkey) |     |  (OpenAI SDK)   |       |  (pm2 restart)     |
+   |  detect_issue() |       |  is_duplicate()   |     |  call_gemini_for|       |   execute_action()  |
+   |  decide_action()|       |  short TTL keys   |     |  _solution()    |       |   subprocess.run()  |
+   +----------------+        +-------------------+     +-----------------+       +-------------------+
+            |                          |                        |                         |
+            |                          |                        v                         |
+            |                          |              +-----------------+                 |
+            |                          |              |   llm_responses |<----------------+
+            |                          |              |   (optional raw) |
+            |                          |              +-----------------+
+            |                          |                        |
+            |                          |                        v
+            |                          |              +-------------------------+
+            |                          |              |   Postgres (incidents,  |
+            |                          |-------------->   llm_responses,         |
+            |                          |   write only  |   incident_events)        |
+            |                          |              +-------------------------+
+            |                          |
+            +--------------------------+
+
+Key artifacts:
+- Kafka topic "logs": JSON messages from app producers.
+- Redis (Valkey): short TTL dedupe keys "issue:{service}:{issue}" to avoid repeats.
+- OpenAI: returns short JSON { reason, suggested_solution } (stored in DB).
+- Postgres tables: incidents (details,json), llm_responses (raw/parsed), incident_events (actions/audit).
+- PM2: local process manager used for log source and for restarts/actions.
+
+Flow summary (single line): App/PM2 -> Kafka -> Consumer:detect -> Redis dedupe -> OpenAI -> Execute action (pm2) -> Persist incident & LLM response -> (dashboard/analytics)
