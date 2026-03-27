@@ -14,6 +14,18 @@ Short: tail PM2 logs → Kafka → Python consumer detects incidents → optiona
 
 ---
 
+
+## Demo Video
+Watch a short demo of the end-to-end flow (PM2 -> Kafka -> Consumer -> OpenAI -> Postgres):
+
+[![Demo video](https://img.youtube.com/vi/s5hQOBz6Yys/hqdefault.jpg)](https://youtu.be/s5hQOBz6Yys)
+
+Direct link: https://youtu.be/s5hQOBz6Yys
+
+A brief caption: This video demonstrates log ingestion from PM2, detection in the consumer, LLM suggestion retrieval, and incident persistence to PostgreSQL.
+
+--- 
+
 ## Tags / Key components
 - Kafka (Aiven)
 - Python consumer (consumercopy.py)
