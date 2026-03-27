@@ -10,7 +10,7 @@ Short: tail PM2 logs → Kafka → Python consumer detects incidents → optiona
 ## Architecture (visual)
 > Add your architecture image at `docs/architecture.png` and it will render here.
 
-![Architecture diagram](docs/architecture.png)
+![Architecture diagram](docs/architecture.jpg)
 
 ---
 
